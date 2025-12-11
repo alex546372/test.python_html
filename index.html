@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Core: Low-Level Quiz</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+
+    <style>
+        :root {
+            /* Palette: Black & Gray Monochrome */
+            --bg-body: #121212;
+            --bg-card: #1e1e1e;
+            --bg-input: #2c2c2c;
+            
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            
+            --border: #333333;
+            --accent: #ffffff; /* White accent for focus */
+            
+            --success: #4caf50; /* Desaturated Green */
+            --error: #f44336;   /* Desaturated Red */
+            
+            --code-font: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            color: var(--text-main);
+            margin: 0;
+            font-weight: 300;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        /* --- Question Cards --- */
+        .question-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .question-card:hover {
+            border-color: #555;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .question-text {
+            font-weight: 500;
+            font-size: 1.15em;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        code {
+            background: #333;
+            color: #e0e0e0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: var(--code-font);
+            font-size: 0.9em;
+            border: 1px solid #444;
+        }
+
+        /* --- Options --- */
+        .options label {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            margin: 8px 0;
+            background: var(--bg-input);
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .options label:hover {
+            background: #383838;
+            border-color: #555;
+        }
+
+        .options input[type="radio"] {
+            margin-right: 15px;
+            accent-color: var(--text-main); /* Modern browser support */
+        }
+
+        /* --- Code Editor --- */
+        .editor-wrapper {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        textarea#code-editor {
+            width: 100%;
+            height: 220px;
+            background: #151515;
+            color: #d4d4d4;
+            border: none;
+            padding: 15px;
+            font-family: var(--code-font);
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+            box-sizing: border-box;
+            display: block;
+        }
+
+        .console {
+            background: #000;
+            color: #ccc;
+            font-family: var(--code-font);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 6px;
+            border-left: 3px solid #555;
+            min-height: 50px;
+            white-space: pre-wrap;
+            font-size: 0.9em;
+        }
+
+        /* --- Buttons --- */
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: 1px solid var(--text-main);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: transparent;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: var(--text-main);
+            color: var(--bg-body);
+        }
+
+        .btn-run {
+            margin-top: 15px;
+            font-size: 12px;
+            padding: 10px 20px;
+            background: #333;
+            border-color: #555;
+        }
+        
+        .btn-run:hover {
+            background: #555;
+            color: #fff;
+        }
+
+        .btn-main-action {
+            width: 100%;
+            margin-top: 30px;
+            padding: 18px;
+            background: var(--text-main);
+            color: var(--bg-body);
+            border: none;
+        }
+        
+        .btn-main-action:hover {
+            background: #fff;
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+
+        /* --- Feedback & Results --- */
+        .feedback {
+            margin-top: 15px;
+            font-size: 0.95em;
+            padding: 10px;
+            border-radius: 4px;
+            display: none; /* Hidden by default */
+        }
+        
+        .feedback.show { display: block; }
+        .correct { color: var(--success); border-left: 3px solid var(--success); background: rgba(76, 175, 80, 0.1); }
+        .incorrect { color: var(--error); border-left: 3px solid var(--error); background: rgba(244, 67, 54, 0.1); }
+        
+        .results-section {
+            text-align: center;
+            margin-top: 50px;
+            padding: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .score-big {
+            font-size: 3rem;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Python Core Check</h1>
+        <p class="subtitle">Интерпретатор • Память • Внутреннее устройство</p>
+    </header>
+
+    <form id="quiz-form">
+        <div id="questions-container"></div>
+
+        <div class="question-card" id="practical-card" style="border-top: 3px solid var(--text-main);">
+            <div class="question-header">
+                <span>Вопрос 11 / 11</span>
+                <span>Практика (Coding)</span>
+            </div>
+            <div class="question-text">
+                Напишите функцию <code>is_prime(n)</code>, которая возвращает <code>True</code>, если число простое, и <code>False</code> в противном случае.
+                <br><br>
+                <small style="color: var(--text-muted); font-weight: normal;">
+                    Правила: 1 не является простым. Отрицательные числа не простые.
+                </small>
+            </div>
+            
+            <div class="editor-wrapper">
+<textarea id="code-editor" spellcheck="false">
+def is_prime(n):
+    # Ваш код здесь
+    pass
+</textarea>
+            </div>
+            <button type="button" class="btn btn-run" onclick="runAndTestCode()">▶ Запустить и Проверить</button>
+            
+            <div id="console-output" class="console">// Ожидание запуска...</div>
+            <div id="practical-feedback" class="feedback"></div>
+        </div>
+
+        <button type="button" class="btn btn-main-action" onclick="finishTest()">Завершить тестирование</button>
+    </form>
+
+    <div id="final-results" class="results-section">
+        <span class="score-big"><span id="score-display">0</span> / 11</span>
+        <h3 id="result-title">Результат</h3>
+        <p id="result-message" style="color: var(--text-muted); margin-bottom: 30px;"></p>
+        <button type="button" class="btn" onclick="location.reload()">Пройти заново</button>
+    </div>
+</div>
+
+<script>
+    // --- База вопросов (10 штук + 1 практика отдельно) ---
+    const quizData = [
+        {
+            question: "Что возвращает функция `id()` в реализации CPython?",
+            options: [
+                "Хэш-сумму объекта",
+                "Адрес объекта в памяти",
+                "Ссылку на класс объекта",
+                "Уникальный UUID (строку)"
+            ],
+            correct: 1,
+            explanation: "В CPython `id()` возвращает адрес памяти объекта (целое число)."
+        },
+        {
+            question: "Какова основная стратегия управления памятью в Python?",
+            options: [
+                "Tracing Garbage Collection (Mark-and-Sweep) как основная",
+                "Ручное освобождение памяти разработчиком",
+                "Подсчет ссылок (Reference Counting) с детектором циклов",
+                "Generational Garbage Collection (только поколения)"
+            ],
+            correct: 2,
+            explanation: "Главный механизм — подсчет ссылок. Если счетчик равен 0, объект удаляется сразу. GC нужен только для циклических ссылок."
+        },
+        {
+            question: "Что такое GIL (Global Interpreter Lock)?",
+            options: [
+                "Мьютекс, разрешающий выполнение байт-кода только одному потоку одновременно",
+                "Механизм защиты памяти от переполнения",
+                "Блокировка базы данных при записи",
+                "Инструмент для многопроцессорного (multiprocessing) параллелизма"
+            ],
+            correct: 0,
+            explanation: "GIL гарантирует, что интерпретатор Python выполняет байт-код только в одном потоке за раз, даже на многоядерных CPU."
+        },
+        {
+            question: "В какой момент выполняются декораторы (`@decorator`)?",
+            options: [
+                "Каждый раз при вызове декорируемой функции",
+                "В момент определения функции (Import time / Definition time)",
+                "Только при явном вызове декоратора",
+                "При запуске сборщика мусора"
+            ],
+            correct: 1,
+            explanation: "Декораторы применяются в момент, когда интерпретатор считывает определение функции (definition time)."
+        },
+        {
+            question: "Что произойдет при выполнении: `a = [1]; b = a; b += [2]; print(a)`?",
+            options: [
+                "[1]",
+                "[1, 2]",
+                "Ошибка",
+                "None"
+            ],
+            correct: 1,
+            explanation: "Оператор `+=` для списков изменяет объект на месте (in-place). Так как `a` и `b` ссылаются на один объект, `a` тоже изменится."
+        },
+        {
+            question: "Для чего используется `__slots__` в классе?",
+            options: [
+                "Для создания приватных методов",
+                "Для экономии памяти и запрета создания `__dict__` у экземпляров",
+                "Для указания абстрактных методов",
+                "Для перегрузки слотов операторов"
+            ],
+            correct: 1,
+            explanation: "`__slots__` фиксирует набор атрибутов, отказываясь от динамического словаря `__dict__`, что экономит память."
+        },
+        {
+            question: "Что такое `iterator` в Python (технически)?",
+            options: [
+                "Любой объект, который можно перебрать в цикле for",
+                "Объект, реализующий методы `__iter__` и `__next__`",
+                "Функция, содержащая `yield`",
+                "Список или кортеж"
+            ],
+            correct: 1,
+            explanation: "Итератор обязан иметь метод `__next__` (возвращающий следующий элемент) и `__iter__` (возвращающий self)."
+        },
+        {
+            question: "Почему выражение `a = 256; b = 256; a is b` возвращает True, а для 300 может вернуть False?",
+            options: [
+                "Это ошибка интерпретатора",
+                "Python кэширует (интернирует) малые целые числа (от -5 до 256)",
+                "Числа до 256 занимают меньше битов",
+                "Оператор `is` работает нестабильно для чисел"
+            ],
+            correct: 1,
+            explanation: "CPython преаллоцирует и кэширует объекты целых чисел в диапазоне от -5 до 256 (Small Integer Caching)."
+        },
+        {
+            question: "Что выведет код: `def f(l=[]): l.append(1); return l` при двух вызовах подряд?",
+            options: [
+                "[1] и [1]",
+                "[1] и [1, 1]",
+                "Ошибка SyntaxError",
+                "None и None"
+            ],
+            correct: 1,
+            explanation: "Значение аргумента по умолчанию создается один раз при создании функции. Список `l` сохраняет состояние между вызовами."
+        },
+        {
+            question: "В чем разница между `deepcopy` и `copy` для списка списков?",
+            options: [
+                "Нет разницы",
+                "`copy` создает новый список, но вложенные списки остаются ссылками; `deepcopy` рекурсивно копирует всё",
+                "`copy` работает быстрее, но удаляет исходный объект",
+                "`deepcopy` используется только для классов"
+            ],
+            correct: 1,
+            explanation: "Поверхностная копия (`copy`) копирует контейнер, но не элементы внутри. Глубокая копия (`deepcopy`) рекурсивно создает копии всех вложенных объектов."
+        }
+    ];
+
+    let practicalScore = 0; // Состояние практической задачи (0 или 1)
+
+    // --- Генерация вопросов ---
+    function initQuiz() {
+        const container = document.getElementById('questions-container');
+        
+        quizData.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.id = `card-${index}`;
+            
+            let optionsHtml = '';
+            item.options.forEach((opt, optIndex) => {
+                optionsHtml += `
+                    <label>
+                        <input type="radio" name="q${index}" value="${optIndex}">
+                        ${opt}
+                    </label>
+                `;
+            });
+
+            card.innerHTML = `
+                <div class="question-header">
+                    <span>Вопрос ${index + 1} / 11</span>
+                    <span>Теория</span>
+                </div>
+                <div class="question-text">${item.question}</div>
+                <div class="options">${optionsHtml}</div>
+                <div class="feedback" id="feedback-${index}"></div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // --- Логика проверки Python кода (Skulpt) ---
+    function runAndTestCode() {
+        const userCode = document.getElementById('code-editor').value;
+        const outputDiv = document.getElementById('console-output');
+        const feedbackDiv = document.getElementById('practical-feedback');
+        
+        outputDiv.innerHTML = "Компиляция и запуск тестов...";
+        outputDiv.style.color = "#a0a0a0";
+        feedbackDiv.className = "feedback"; 
+        feedbackDiv.innerHTML = "";
+
+        // Скрытый тестовый набор
+        const testSuite = `
+try:
+    results = []
+    # Test 1: Simple prime
+    results.append(1 if is_prime(7) is True else 0)
+    # Test 2: Composite
+    results.append(1 if is_prime(10) is False else 0)
+    # Test 3: Edge case 1
+    results.append(1 if is_prime(1) is False else 0)
+    # Test 4: Edge case 0 or negative
+    results.append(1 if is_prime(0) is False else 0)
+    # Test 5: Large prime
+    results.append(1 if is_prime(101) is True else 0)
+
+    if sum(results) == 5:
+        print("SECRET_SUCCESS_TOKEN")
+    else:
+        print(f"Пройдено тестов: {sum(results)} из 5.")
+        if is_prime(1) is True: print("Подсказка: 1 не является простым числом.")
+        if is_prime(9) is True: print("Подсказка: 9 делится на 3.")
+except Exception as e:
+    print("Ошибка выполнения: " + str(e))
+`;
+
+        Sk.configure({
+            output: function(text) {
+                if (text === "SECRET_SUCCESS_TOKEN\n") {
+                    practicalScore = 1;
+                    outputDiv.innerHTML = "✅ Все тесты пройдены! Код работает корректно.";
+                    outputDiv.style.color = "var(--success)";
+                } else if (text !== "\n") {
+                    outputDiv.innerHTML = text;
+                    practicalScore = 0;
+                    if(text.includes("Ошибка") || text.includes("Пройдено")) {
+                         outputDiv.style.color = "var(--error)";
+                    } else {
+                         outputDiv.style.color = "#ccc";
+                    }
+                }
+            },
+            read: function(x) {
+                if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+                    throw "File not found: '" + x + "'";
+                return Sk.builtinFiles["files"][x];
+            }
+        });
+
+        const fullCode = userCode + "\n" + testSuite;
+
+        Sk.misceval.asyncToPromise(function() {
+            return Sk.importMainWithBody("<stdin>", false, fullCode, true);
+        }).then(function(mod) {
+            // Success handler logic is mainly in 'output' callback
+        }, function(err) {
+            outputDiv.innerHTML = "Runtime Error: " + err.toString();
+            outputDiv.style.color = "var(--error)";
+            practicalScore = 0;
+        });
+    }
+
+    // --- Завершение и подсчет ---
+    function finishTest() {
+        let score = 0;
+        const total = quizData.length + 1; // 10 MCQ + 1 Code
+
+        // 1. Проверка MCQ
+        quizData.forEach((item, index) => {
+            const selected = document.querySelector(`input[name="q${index}"]:checked`);
+            const feedbackEl = document.getElementById(`feedback-${index}`);
+            const card = document.getElementById(`card-${index}`);
+            
+            feedbackEl.className = "feedback show";
+
+            if (selected) {
+                if (parseInt(selected.value) === item.correct) {
+                    score++;
+                    feedbackEl.classList.add("correct");
+                    feedbackEl.classList.remove("incorrect");
+                    feedbackEl.innerHTML = `<strong>Верно!</strong> ${item.explanation}`;
+                    card.style.borderColor = "var(--success)";
+                } else {
+                    feedbackEl.classList.add("incorrect");
+                    feedbackEl.classList.remove("correct");
+                    feedbackEl.innerHTML = `<strong>Ошибка.</strong> ${item.explanation}`;
+                    card.style.borderColor = "var(--error)";
+                }
+            } else {
+                feedbackEl.classList.add("incorrect");
+                feedbackEl.innerHTML = `<strong>Не отвечено.</strong> Правильный ответ скрыт.`;
+                card.style.borderColor = "var(--error)";
+            }
+        });
+
+        // 2. Проверка Практики
+        const pracFeedback = document.getElementById('practical-feedback');
+        const pracCard = document.getElementById('practical-card');
+        
+        pracFeedback.className = "feedback show";
+        if (practicalScore === 1) {
+            score++;
+            pracFeedback.classList.add("correct");
+            pracFeedback.innerHTML = "<strong>Отлично!</strong> Практическая задача решена верно.";
+            pracCard.style.borderColor = "var(--success)";
+        } else {
+            pracFeedback.classList.add("incorrect");
+            pracFeedback.innerHTML = "<strong>Не зачтено.</strong> Код не прошел все тесты или не был запущен.";
+            pracCard.style.borderColor = "var(--error)";
+        }
+
+        // 3. Вывод результатов
+        const resultsDiv = document.getElementById('final-results');
+        const scoreDisplay = document.getElementById('score-display');
+        const msg = document.getElementById('result-message');
+        
+        scoreDisplay.innerText = score;
+        
+        const percent = (score / total) * 100;
+        if (percent === 100) msg.innerText = "Идеально! Вы глубоко понимаете Python.";
+        else if (percent > 75) msg.innerText = "Отличный результат! Хорошие знания базы.";
+        else if (percent > 50) msg.innerText = "Неплохо, но есть пробелы в понимании работы интерпретатора.";
+        else msg.innerText = "Рекомендуется повторить темы: управление памятью, области видимости и изменяемые типы.";
+
+        resultsDiv.style.display = 'block';
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Запуск
+    initQuiz();
+</script>
+
+</body>
+</html>
